@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ندرس لحتى تدوب الشمعه</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
+
+    body {
+      font-family: 'Tajawal', sans-serif;
+      background-color: #0b0d12;
+      color: #f3f4f6;
+    }
+
+    /* توهج محيط للشعلة */
+    .flame-glow {
+      background: radial-gradient(circle, rgba(251, 146, 60, 0.45) 0%, rgba(245, 158, 11, 0.18) 50%, transparent 80%);
+      filter: blur(14px);
+    }
+
+    /* حركة اهتزاز الشعلة */
+    @keyframes realisticFlicker {
+      0% { transform: scale(1) rotate(-1.5deg); opacity: 0.95; }
+      20% { transform: scale(1.05, 0.95) rotate(1.8deg); opacity: 1; }
+      40% { transform: scale(0.95, 1.06) rotate(-1deg); opacity: 0.92; }
+      60% { transform: scale(1.03, 0.97) rotate(2deg); opacity: 1; }
+      80% { transform: scale(0.97, 1.04) rotate(-0.8deg); opacity: 0.94; }
+      100% { transform: scale(1) rotate(-1.5deg); opacity: 0.95; }
+    }
+
+    .animate-realistic-flame {
+      animation: realisticFlicker 0.75s infinite alternate ease-in-out;
+      transform-origin: bottom center;
+    }
+
+    /* تساقط قطرات الشمع */
+    @keyframes dropWax {
+      0% { transform: translateY(0) scale(1); opacity: 0.8; }
+      70% { transform: translateY(110px) scale(1.2); opacity: 1; }
+      100% { transform: translateY(130px) scale(0); opacity: 0; }
+    }
+
+    .wax-drip {
+      animation: dropWax 2.4s infinite ease-in;
+    }
+
+    /* حركة تصاعد الدخان */
+    @keyframes riseSmoke {
+      0% { transform: translateY(0) scale(1); opacity: 0.8; }
+      50% { transform: translateY(-40px) scale(2.2) translateX(-8px); opacity: 0.4; }
+      100% { transform: translateY(-90px) scale(4) translateX(14px); opacity: 0; }
+    }
+
+    .smoke-animation {
+      animation: riseSmoke 2.5s forwards ease-out;
+    }
+
+    /* حركة الكبريت عند الإشعال */
+    @keyframes strikeMatch {
+      0% { transform: translate(-80px, -40px) rotate(-35deg); opacity: 0; }
+      30% { transform: translate(-20px, -10px) rotate(-15deg); opacity: 1; }
+      60% { transform: translate(0px, 0px) rotate(0deg); opacity: 1; }
+      80% { transform: translate(5px, -5px) rotate(10deg); opacity: 1; }
+      100% { transform: translate(60px, -60px) rotate(45deg); opacity: 0; }
+    }
+
+    .animate-match {
+      animation: strikeMatch 1.2s ease-out forwards;
+    }
+
+    /* حركة الهواء (النفخة) عند الإيقاف */
+    @keyframes blowWind {
+      0% { transform: translateX(60px) scale(0.8); opacity: 0; }
+      40% { transform: translateX(0px) scale(1.1); opacity: 0.8; }
+      100% { transform: translateX(-60px) scale(1.4); opacity: 0; }
+    }
+
+    .animate-blow {
+      animation: blowWind 0.8s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+  <!-- الكارت الرئيسي -->
+  <div class="w-full max-w-md bg-slate-900/90 backdrop-blur-md rounded-2xl p-6 border border-slate-800 shadow-2xl flex flex-col items-center relative overflow-hidden">
+    
+    <!-- العنوان الرئيسي -->
+    <h1 class="text-3xl font-extrabold text-amber-400 mb-6 tracking-wide">ندرس لحتى تدوب الشمعه</h1>
+
+    <!-- مسرح الشمعة والتأثيرات -->
+    <div class="relative w-64 h-72 flex items-end justify-center mb-6">
+      
+      <!-- إضاءة التوهج خلف الشمعة -->
+      <div id="ambientGlow" class="absolute w-48 h-48 rounded-full flame-glow opacity-0 transition-opacity duration-500 top-6 pointer-events-none"></div>
+
+      <!-- تأثير النفخة عند الإيقاف المؤقت -->
+      <div id="blowContainer" class="absolute z-30 hidden pointer-events-none" style="bottom: 180px;">
+        <div class="flex items-center space-x-1 animate-blow">
+          <span class="text-3xl">🌬️</span>
+          <div class="w-12 h-1 bg-gradient-to-l from-sky-200 to-transparent rounded-full blur-[1px]"></div>
+        </div>
+      </div>
+
+      <!-- تأثير الكبريت عند الإشعال -->
+      <div id="matchstick" class="absolute z-30 hidden pointer-events-none" style="bottom: 175px; right: 80px;">
+        <div class="animate-match flex items-center">
+          <div class="w-2 h-2 bg-amber-400 rounded-full shadow-[0_0_10px_#f59e0b]"></div>
+          <div class="w-14 h-1.5 bg-amber-900/90 rounded-r-sm"></div>
+        </div>
+      </div>
+
+      <!-- الدخان عند انطفاء أو نفخ الشمعة -->
+      <div id="smokeContainer" class="absolute top-16 hidden flex-col items-center z-20 pointer-events-none">
+        <div class="w-3 h-3 bg-slate-400/60 rounded-full blur-xs smoke-animation"></div>
+        <div class="w-2.5 h-2.5 bg-slate-300/50 rounded-full blur-xs smoke-animation" style="animation-delay: 0.3s;"></div>
+      </div>
+
+      <!-- الشعلة والفتيل -->
+      <div id="flameContainer" class="absolute z-10 flex flex-col items-center transition-all duration-300" style="bottom: 180px;">
+        <div id="flame" class="relative w-8 h-14 hidden animate-realistic-flame flex items-end justify-center">
+          <div class="absolute inset-0 bg-gradient-to-t from-red-600 via-orange-500 to-amber-300 rounded-t-full rounded-b-md blur-[1px]"></div>
+          <div class="absolute w-5 h-10 bottom-0 bg-gradient-to-t from-orange-400 via-amber-300 to-yellow-100 rounded-t-full rounded-b-sm"></div>
+          <div class="absolute w-2.5 h-6 bottom-1 bg-gradient-to-t from-amber-200 to-white rounded-t-full rounded-b-xs shadow-sm"></div>
+          <div class="absolute w-3 h-2 bottom-0 bg-blue-500/80 rounded-b-full blur-[0.5px]"></div>
+        </div>
+        <div class="w-1 h-3.5 bg-stone-900 rounded-t-sm border-t border-stone-600"></div>
+      </div>
+
+      <!-- جسم الشمعة -->
+      <div id="candleBody" class="w-24 h-48 relative transition-all duration-300 origin-bottom">
+        <svg viewBox="0 0 100 200" class="w-full h-full drop-shadow-md">
+          <path d="M 15 20 Q 50 15 85 20 L 85 195 Q 50 200 15 195 Z" fill="#fef3c7" />
+          <path d="M 15 20 Q 50 25 85 20 Q 50 15 15 20 Z" fill="#fde68a" />
+          <path d="M 70 20 Q 75 100 70 195 L 85 195 Q 85 100 85 20 Z" fill="#f59e0b" opacity="0.15" />
+        </svg>
+
+        <div id="waxDrip" class="hidden absolute top-4 left-3 w-2 h-3 bg-amber-100 rounded-full wax-drip"></div>
+      </div>
+
+      <!-- القاعدة -->
+      <div class="absolute bottom-0 w-36 h-4 bg-stone-800 rounded-full border-t border-stone-700 shadow-xl"></div>
+    </div>
+
+    <!-- العداد الرقمي -->
+    <div id="timerDisplay" class="text-4xl font-mono tracking-wider font-bold text-amber-200 mb-6">
+      00:00:00
+    </div>
+
+    <!-- المدخلات (ساعات - دقائق - ثواني) -->
+    <div class="grid grid-cols-3 gap-3 w-full mb-6">
+      <div class="flex flex-col items-center">
+        <label class="text-xs text-slate-400 mb-1">ساعات</label>
+        <input type="number" id="hoursInput" min="0" max="99" value="0" class="w-full text-center bg-slate-800 border border-slate-700 rounded-lg py-2 text-white font-bold focus:outline-none focus:border-amber-500">
+      </div>
+      <div class="flex flex-col items-center">
+        <label class="text-xs text-slate-400 mb-1">دقائق</label>
+        <input type="number" id="minutesInput" min="0" max="59" value="25" class="w-full text-center bg-slate-800 border border-slate-700 rounded-lg py-2 text-white font-bold focus:outline-none focus:border-amber-500">
+      </div>
+      <div class="flex flex-col items-center">
+        <label class="text-xs text-slate-400 mb-1">ثواني</label>
+        <input type="number" id="secondsInput" min="0" max="59" value="0" class="w-full text-center bg-slate-800 border border-slate-700 rounded-lg py-2 text-white font-bold focus:outline-none focus:border-amber-500">
+      </div>
+    </div>
+
+    <!-- أزرار التحكم المعدلة -->
+    <div class="flex gap-2 w-full">
+      <!-- زر ولّع الكبريت -->
+      <button id="startBtn" onclick="startTimer()" class="flex-1 bg-amber-600 hover:bg-amber-500 text-white font-bold py-2.5 px-2 rounded-lg transition duration-200 text-sm flex items-center justify-center gap-1">
+        <span>ولّع الكبريت</span> 🪵🔥
+      </button>
+
+      <!-- زر انفخ على الشمعة -->
+      <button id="pauseBtn" onclick="pauseTimer()" disabled class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-2.5 px-2 rounded-lg transition duration-200 text-sm opacity-50 cursor-not-allowed flex items-center justify-center gap-1">
+        <span>انفخ عليها</span> 🌬️
+      </button>
+
+      <!-- زر شمعة جديدة -->
+      <button onclick="resetTimer()" class="bg-stone-700 hover:bg-stone-600 text-white font-bold py-2.5 px-3 rounded-lg transition duration-200 text-sm flex items-center justify-center gap-1">
+        <span>شمعة جديدة</span> 🕯️
+      </button>
+    </div>
+
+  </div>
+
+  <script>
+    let totalSeconds = 0;
+    let initialTotalSeconds = 0;
+    let timerInterval = null;
+    let isRunning = false;
+
+    const hoursInput = document.getElementById('hoursInput');
+    const minutesInput = document.getElementById('minutesInput');
+    const secondsInput = document.getElementById('secondsInput');
+    const timerDisplay = document.getElementById('timerDisplay');
+    const flame = document.getElementById('flame');
+    const flameContainer = document.getElementById('flameContainer');
+    const candleBody = document.getElementById('candleBody');
+    const ambientGlow = document.getElementById('ambientGlow');
+    const waxDrip = document.getElementById('waxDrip');
+    const smokeContainer = document.getElementById('smokeContainer');
+    const matchstick = document.getElementById('matchstick');
+    const blowContainer = document.getElementById('blowContainer');
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+
+    function pad(num) {
+      return num.toString().padStart(2, '0');
+    }
+
+    function updateDisplay() {
+      const h = Math.floor(totalSeconds / 3600);
+      const m = Math.floor((totalSeconds % 3600) / 60);
+      const s = totalSeconds % 60;
+
+      timerDisplay.textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
+
+      if (initialTotalSeconds > 0) {
+        const ratio = totalSeconds / initialTotalSeconds;
+        const scaleY = 0.2 + (0.8 * ratio);
+        candleBody.style.transform = `scaleY(${scaleY})`;
+
+        const baseBottom = 16; 
+        const maxOffset = 164; 
+        const currentBottom = baseBottom + (maxOffset * scaleY);
+        flameContainer.style.bottom = `${currentBottom}px`;
+        smokeContainer.style.bottom = `${currentBottom + 10}px`;
+        blowContainer.style.bottom = `${currentBottom}px`;
+        matchstick.style.bottom = `${currentBottom - 5}px`;
+      }
+    }
+
+    // زر التشغيل: ولّع الكبريت 🪵🔥
+    function startTimer() {
+      if (!isRunning) {
+        if (totalSeconds === 0) {
+          const h = parseInt(hoursInput.value) || 0;
+          const m = parseInt(minutesInput.value) || 0;
+          const s = parseInt(secondsInput.value) || 0;
+
+          totalSeconds = (h * 3600) + (m * 60) + s;
+          initialTotalSeconds = totalSeconds;
+        }
+
+        if (totalSeconds <= 0) return;
+
+        isRunning = true;
+        
+        // إظهار حركة الكبريت أولاً
+        matchstick.classList.remove('hidden');
+        smokeContainer.classList.add('hidden');
+
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+        setTimeout(() => {
+          matchstick.classList.add('hidden');
+          flame.classList.remove('hidden');
+          flame.classList.add('flex');
+          ambientGlow.classList.remove('opacity-0');
+          waxDrip.classList.remove('hidden');
+
+          pauseBtn.disabled = false;
+          pauseBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
+          updateDisplay();
+
+          timerInterval = setInterval(() => {
+            totalSeconds--;
+            updateDisplay();
+
+            if (totalSeconds <= 0) {
+              finishTimer();
+            }
+          }, 1000);
+        }, 600);
+      }
+    }
+
+    // زر الإيقاف: انفخ على الشمعة 🌬️
+    function pauseTimer() {
+      if (isRunning) {
+        clearInterval(timerInterval);
+        isRunning = false;
+
+        // إخفاء اللهيب وإظهار النفخة والدخان
+        flame.classList.add('hidden');
+        flame.classList.remove('flex');
+        ambientGlow.classList.add('opacity-0');
+        waxDrip.classList.add('hidden');
+
+        blowContainer.classList.remove('hidden');
+        smokeContainer.classList.remove('hidden');
+
+        setTimeout(() => {
+          blowContainer.classList.add('hidden');
+        }, 800);
+
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        pauseBtn.disabled = true;
+        pauseBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      }
+    }
+
+    // انتهاء العداد تلقائياً
+    function finishTimer() {
+      clearInterval(timerInterval);
+      isRunning = false;
+
+      flame.classList.add('hidden');
+      flame.classList.remove('flex');
+      ambientGlow.classList.add('opacity-0');
+      waxDrip.classList.add('hidden');
+
+      smokeContainer.classList.remove('hidden');
+
+      startBtn.disabled = false;
+      startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      pauseBtn.disabled = true;
+      pauseBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+
+    // زر إعادة الضبط: شمعة جديدة 🕯️
+    function resetTimer() {
+      clearInterval(timerInterval);
+      isRunning = false;
+      totalSeconds = 0;
+      initialTotalSeconds = 0;
+
+      // إرجاع الشمعة لطولها الأصلي الكامل
+      candleBody.style.transform = 'scaleY(1)';
+      flameContainer.style.bottom = '180px';
+
+      flame.classList.add('hidden');
+      flame.classList.remove('flex');
+      ambientGlow.classList.add('opacity-0');
+      waxDrip.classList.add('hidden');
+      smokeContainer.classList.add('hidden');
+      blowContainer.classList.add('hidden');
+      matchstick.classList.add('hidden');
+
+      const h = parseInt(hoursInput.value) || 0;
+      const m = parseInt(minutesInput.value) || 0;
+      const s = parseInt(secondsInput.value) || 0;
+      timerDisplay.textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
+
+      startBtn.disabled = false;
+      startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      pauseBtn.disabled = true;
+      pauseBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+  </script>
+</body>
+</html>p
