@@ -6,18 +6,19 @@
   <title>ندرس لحتى تدوب الشمعه</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap');
 
     body {
       font-family: 'Tajawal', sans-serif;
       background-color: #0b0d12;
       color: #f3f4f6;
+      transition: background 0.6s ease;
     }
 
     /* توهج محيط للشعلة */
     .flame-glow {
-      background: radial-gradient(circle, rgba(251, 146, 60, 0.45) 0%, rgba(245, 158, 11, 0.18) 50%, transparent 80%);
-      filter: blur(14px);
+      filter: blur(16px);
+      transition: background 0.4s ease;
     }
 
     /* حركة اهتزاز الشعلة */
@@ -37,7 +38,7 @@
 
     /* تساقط قطرات الشمع */
     @keyframes dropWax {
-      0% { transform: translateY(0) scale(1); opacity: 0.8; }
+      0% { transform: translateY(0) scale(1); opacity: 0.85; }
       70% { transform: translateY(110px) scale(1.2); opacity: 1; }
       100% { transform: translateY(130px) scale(0); opacity: 0; }
     }
@@ -80,21 +81,87 @@
     .animate-blow {
       animation: blowWind 0.8s ease-out forwards;
     }
+
+    /* شريط تمرير أنيق للمتجر */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.5);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 10px;
+    }
   </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-4">
+<body id="mainBody" class="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-x-hidden select-none">
+
+  <!-- العلامة المائية لحساب انستغرام في الخلفية -->
+  <div class="fixed inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden">
+    <span dir="ltr" class="text-[13vw] md:text-[10vw] font-black text-white/[0.045] tracking-widest -rotate-12 whitespace-nowrap">
+      @okowasana
+    </span>
+  </div>
+
+  <!-- الشريط العلوي: الإحصائيات + أزرار الشموع والخلفيات -->
+  <div class="w-full max-w-md z-10 mb-3 flex flex-col gap-2">
+    <!-- بطاقة الإحصائيات -->
+    <div class="bg-slate-900/80 backdrop-blur-md border border-slate-800 rounded-xl p-3 flex justify-between items-center text-xs shadow-lg">
+      <div class="flex flex-col">
+        <span class="text-slate-400">رصيدك</span>
+        <span id="totalStudiedText" dir="ltr" class="text-amber-400 font-mono font-bold text-base mt-0.5 text-right">00:00:00</span>
+      </div>
+      <div class="h-8 w-[1px] bg-slate-800"></div>
+      <div class="flex flex-col text-left">
+        <span class="text-slate-400">رقمك القياسي 🏆</span>
+        <span id="longestSessionText" dir="ltr" class="text-emerald-400 font-mono font-bold text-base mt-0.5">00:00:00</span>
+      </div>
+    </div>
+
+    <!-- أزرار فتح نافذة الشموع وألوان الجدران -->
+    <div class="grid grid-cols-2 gap-2">
+      <button onclick="openModal('candles')" class="bg-slate-900/85 hover:bg-slate-800 border border-amber-500/30 text-amber-300 font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition shadow">
+        <span>🕯️</span> أشكال الشموع (<span id="unlockedCandlesCount">1</span>/10)
+      </button>
+      <button onclick="openModal('themes')" class="bg-slate-900/85 hover:bg-slate-800 border border-sky-500/30 text-sky-300 font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition shadow">
+        <span>🎨</span> ألوان الجدران (<span id="unlockedThemesCount">1</span>/8)
+      </button>
+    </div>
+  </div>
 
   <!-- الكارت الرئيسي -->
-  <div class="w-full max-w-md bg-slate-900/90 backdrop-blur-md rounded-2xl p-6 border border-slate-800 shadow-2xl flex flex-col items-center relative overflow-hidden">
+  <div class="w-full max-w-md z-10 bg-slate-900/85 backdrop-blur-md rounded-2xl p-6 border border-slate-800 shadow-2xl flex flex-col items-center relative overflow-hidden">
     
+    <!-- اسم الشمعة المختارة أو الجدار الحالي -->
+    <div class="flex items-center gap-2 mb-2">
+      <span id="activeCandleBadge" class="text-[11px] bg-amber-500/10 text-amber-300 border border-amber-500/20 px-3 py-0.5 rounded-full">
+        شمعة الفانيليا الكلاسيكية
+      </span>
+    </div>
+
+    <!-- شريط بدء التحدي عند اختيار تحدي غير مفتوح -->
+    <div id="previewChallengeBar" class="hidden w-full bg-amber-500/15 border border-amber-500/40 rounded-xl p-2.5 mb-3 items-center justify-between gap-2">
+      <div class="text-[11px] text-amber-200 font-bold" id="previewChallengeText"></div>
+      <div class="flex items-center gap-1.5">
+        <button id="acceptChallengeBtn" onclick="startSelectedChallenge()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-[11px] px-2.5 py-1 rounded-lg transition">
+          ابدأ التحدي 🔥
+        </button>
+        <button onclick="cancelPreview()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] px-2 py-1 rounded-lg transition">
+          إلغاء
+        </button>
+      </div>
+    </div>
+
     <!-- العنوان الرئيسي -->
-    <h1 class="text-3xl font-extrabold text-amber-400 mb-6 tracking-wide">ندرس لحتى تدوب الشمعه</h1>
+    <h1 class="text-3xl font-extrabold text-amber-400 mb-4 tracking-wide">ندرس لحتى تدوب الشمعه</h1>
 
     <!-- مسرح الشمعة والتأثيرات -->
-    <div class="relative w-64 h-72 flex items-end justify-center mb-6">
+    <div class="relative w-64 flex items-end justify-center mb-5" style="height: 265px;">
       
       <!-- إضاءة التوهج خلف الشمعة -->
-      <div id="ambientGlow" class="absolute w-48 h-48 rounded-full flame-glow opacity-0 transition-opacity duration-500 top-6 pointer-events-none"></div>
+      <div id="ambientGlow" class="absolute w-48 h-48 rounded-full flame-glow opacity-0 transition-opacity duration-500 top-4 pointer-events-none"
+           style="background: radial-gradient(circle, rgba(251, 146, 60, 0.45) 0%, rgba(245, 158, 11, 0.18) 50%, transparent 80%);"></div>
 
       <!-- تأثير النفخة عند الإيقاف المؤقت -->
       <div id="blowContainer" class="absolute z-30 hidden pointer-events-none" style="bottom: 180px;">
@@ -121,8 +188,8 @@
       <!-- الشعلة والفتيل -->
       <div id="flameContainer" class="absolute z-10 flex flex-col items-center transition-all duration-300" style="bottom: 180px;">
         <div id="flame" class="relative w-8 h-14 hidden animate-realistic-flame flex items-end justify-center">
-          <div class="absolute inset-0 bg-gradient-to-t from-red-600 via-orange-500 to-amber-300 rounded-t-full rounded-b-md blur-[1px]"></div>
-          <div class="absolute w-5 h-10 bottom-0 bg-gradient-to-t from-orange-400 via-amber-300 to-yellow-100 rounded-t-full rounded-b-sm"></div>
+          <div id="flameOuter" class="absolute inset-0 bg-gradient-to-t from-red-600 via-orange-500 to-amber-300 rounded-t-full rounded-b-md blur-[1px]"></div>
+          <div id="flameMid" class="absolute w-5 h-10 bottom-0 bg-gradient-to-t from-orange-400 via-amber-300 to-yellow-100 rounded-t-full rounded-b-sm"></div>
           <div class="absolute w-2.5 h-6 bottom-1 bg-gradient-to-t from-amber-200 to-white rounded-t-full rounded-b-xs shadow-sm"></div>
           <div class="absolute w-3 h-2 bottom-0 bg-blue-500/80 rounded-b-full blur-[0.5px]"></div>
         </div>
@@ -132,12 +199,12 @@
       <!-- جسم الشمعة -->
       <div id="candleBody" class="w-24 h-48 relative transition-all duration-300 origin-bottom">
         <svg viewBox="0 0 100 200" class="w-full h-full drop-shadow-md">
-          <path d="M 15 20 Q 50 15 85 20 L 85 195 Q 50 200 15 195 Z" fill="#fef3c7" />
-          <path d="M 15 20 Q 50 25 85 20 Q 50 15 15 20 Z" fill="#fde68a" />
-          <path d="M 70 20 Q 75 100 70 195 L 85 195 Q 85 100 85 20 Z" fill="#f59e0b" opacity="0.15" />
+          <path id="candleMainPath" d="M 15 20 Q 50 15 85 20 L 85 195 Q 50 200 15 195 Z" fill="#fef3c7" />
+          <path id="candleTopPath" d="M 15 20 Q 50 25 85 20 Q 50 15 15 20 Z" fill="#fde68a" />
+          <path id="candleShadePath" d="M 70 20 Q 75 100 70 195 L 85 195 Q 85 100 85 20 Z" fill="#f59e0b" opacity="0.2" />
         </svg>
 
-        <div id="waxDrip" class="hidden absolute top-4 left-3 w-2 h-3 bg-amber-100 rounded-full wax-drip"></div>
+        <div id="waxDrip" class="hidden absolute top-4 left-3 w-2 h-3 rounded-full wax-drip" style="background-color: #fef3c7;"></div>
       </div>
 
       <!-- القاعدة -->
@@ -145,59 +212,174 @@
     </div>
 
     <!-- العداد الرقمي -->
-    <div id="timerDisplay" class="text-4xl font-mono tracking-wider font-bold text-amber-200 mb-6">
-      00:00:00
+    <div id="timerDisplay" dir="ltr" class="text-4xl font-mono tracking-wider font-bold text-amber-200 mb-5">
+      00:25:00
     </div>
 
     <!-- المدخلات (ساعات - دقائق - ثواني) -->
-    <div class="grid grid-cols-3 gap-3 w-full mb-6">
+    <div class="grid grid-cols-3 gap-3 w-full mb-5">
       <div class="flex flex-col items-center">
         <label class="text-xs text-slate-400 mb-1">ساعات</label>
-        <input type="number" id="hoursInput" min="0" max="99" value="0" class="w-full text-center bg-slate-800 border border-slate-700 rounded-lg py-2 text-white font-bold focus:outline-none focus:border-amber-500">
+        <input type="number" id="hoursInput" min="0" max="99" value="0" onchange="syncInputDisplay()" class="w-full text-center bg-slate-800 border border-slate-700 rounded-lg py-2 text-white font-bold focus:outline-none focus:border-amber-500">
       </div>
       <div class="flex flex-col items-center">
         <label class="text-xs text-slate-400 mb-1">دقائق</label>
-        <input type="number" id="minutesInput" min="0" max="59" value="25" class="w-full text-center bg-slate-800 border border-slate-700 rounded-lg py-2 text-white font-bold focus:outline-none focus:border-amber-500">
+        <input type="number" id="minutesInput" min="0" max="59" value="25" onchange="syncInputDisplay()" class="w-full text-center bg-slate-800 border border-slate-700 rounded-lg py-2 text-white font-bold focus:outline-none focus:border-amber-500">
       </div>
       <div class="flex flex-col items-center">
         <label class="text-xs text-slate-400 mb-1">ثواني</label>
-        <input type="number" id="secondsInput" min="0" max="59" value="0" class="w-full text-center bg-slate-800 border border-slate-700 rounded-lg py-2 text-white font-bold focus:outline-none focus:border-amber-500">
+        <input type="number" id="secondsInput" min="0" max="59" value="0" onchange="syncInputDisplay()" class="w-full text-center bg-slate-800 border border-slate-700 rounded-lg py-2 text-white font-bold focus:outline-none focus:border-amber-500">
       </div>
     </div>
 
-    <!-- أزرار التحكم المعدلة -->
+    <!-- أزرار التحكم -->
     <div class="flex gap-2 w-full">
-      <!-- زر ولّع الكبريت -->
       <button id="startBtn" onclick="startTimer()" class="flex-1 bg-amber-600 hover:bg-amber-500 text-white font-bold py-2.5 px-2 rounded-lg transition duration-200 text-sm flex items-center justify-center gap-1">
         <span>ولّع الكبريت</span> 🪵🔥
       </button>
 
-      <!-- زر انفخ على الشمعة -->
       <button id="pauseBtn" onclick="pauseTimer()" disabled class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-2.5 px-2 rounded-lg transition duration-200 text-sm opacity-50 cursor-not-allowed flex items-center justify-center gap-1">
         <span>انفخ عليها</span> 🌬️
       </button>
 
-      <!-- زر شمعة جديدة -->
       <button onclick="resetTimer()" class="bg-stone-700 hover:bg-stone-600 text-white font-bold py-2.5 px-3 rounded-lg transition duration-200 text-sm flex items-center justify-center gap-1">
         <span>شمعة جديدة</span> 🕯️
       </button>
     </div>
 
+    <!-- توقيع ورابط حساب الانستغرام أسفل الكارت -->
+    <div class="mt-4 text-[11px] text-slate-500 flex items-center gap-1">
+      <span>صُمّم بكل حب للدراسة •</span>
+      <a href="https://www.instagram.com/okowasana/" target="_blank" rel="noopener noreferrer" dir="ltr" class="text-amber-400 hover:text-amber-300 underline decoration-amber-500/40 font-bold transition">
+        @okowasana
+      </a>
+    </div>
+  </div>
+
+  <!-- نافذة عرض الشموع وألوان الجدران (Modal) -->
+  <div id="galleryModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+      
+      <!-- رأس النافذة + التبويبات -->
+      <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+        <div class="flex gap-2">
+          <button id="tabCandles" onclick="switchTab('candles')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-600 text-white transition">
+            🕯️ أشكال الشموع (10)
+          </button>
+          <button id="tabThemes" onclick="switchTab('themes')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+            🎨 ألوان الجدران (8)
+          </button>
+        </div>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-white text-xl font-bold px-2">&times;</button>
+      </div>
+
+      <!-- شريط التقدم والعبارة التحفيزية -->
+      <div class="bg-slate-950/60 px-4 py-2.5 text-xs text-slate-300 flex justify-between items-center border-b border-slate-800/80">
+        <span>رصيدك: <strong id="modalHoursBadge" dir="ltr" class="text-amber-400 font-mono">00:00:00</strong></span>
+        <span class="text-amber-300 font-bold">نقي واستحلي بس بعد الدراسة</span>
+      </div>
+
+      <!-- جملة التحدي -->
+      <div class="bg-slate-800/40 px-4 py-1.5 text-[11px] text-slate-300 font-bold text-center border-b border-slate-800/60">
+        جرب اتحدى حالك
+      </div>
+
+      <!-- محتوى الشبكة -->
+      <div id="modalGrid" class="p-4 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <!-- يتم تعبئتها بواسطة JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <!-- إشعار منبثق عند فتح شمعة أو جدار جديد -->
+  <div id="unlockToast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-2xl font-bold text-sm hidden items-center gap-2 border border-emerald-400">
+    <span>🎉</span>
+    <span id="unlockToastText">مبارك! فتحت شمعة جديدة!</span>
   </div>
 
   <script>
+    // ==========================================
+    // 1. بيانات 10 أنواع من الشموع (تحديات حرة من 2 إلى 10 ساعات)
+    // ==========================================
+    const CANDLES = [
+      { id: 0, name: 'الفانيليا الكلاسيكية', hours: 0, body: '#fef3c7', top: '#fde68a', shade: '#f59e0b', flameOuter: 'from-red-600 via-orange-500 to-amber-300', glow: 'rgba(251, 146, 60, 0.45)' },
+      { id: 1, name: 'الورد الدمشقي', hours: 2, body: '#fbcfe8', top: '#f9a8d4', shade: '#db2777', flameOuter: 'from-rose-600 via-pink-500 to-amber-200', glow: 'rgba(244, 63, 94, 0.45)' },
+      { id: 2, name: 'الخزامى (اللافندر)', hours: 3, body: '#ddd6fe', top: '#c4b5fd', shade: '#7c3aed', flameOuter: 'from-purple-600 via-fuchsia-500 to-amber-200', glow: 'rgba(168, 85, 247, 0.45)' },
+      { id: 3, name: 'نسيم البحر', hours: 4, body: '#bae6fd', top: '#7dd3fc', shade: '#0284c7', flameOuter: 'from-blue-600 via-cyan-400 to-white', glow: 'rgba(56, 189, 248, 0.45)' },
+      { id: 4, name: 'الماتشا والنعناع', hours: 5, body: '#bbf7d0', top: '#86efac', shade: '#16a34a', flameOuter: 'from-emerald-600 via-teal-400 to-amber-200', glow: 'rgba(52, 211, 153, 0.45)' },
+      { id: 5, name: 'القهوة الدافئة', hours: 6, body: '#d6bc9c', top: '#bfa07a', shade: '#78350f', flameOuter: 'from-amber-700 via-orange-500 to-yellow-200', glow: 'rgba(217, 119, 6, 0.45)' },
+      { id: 6, name: 'العنبر الملكي', hours: 7, body: '#fed7aa', top: '#fdba74', shade: '#ea580c', flameOuter: 'from-red-600 via-amber-500 to-yellow-100', glow: 'rgba(249, 115, 22, 0.5)' },
+      { id: 7, name: 'الياقوت الأحمر', hours: 8, body: '#fecaca', top: '#fca5a5', shade: '#dc2626', flameOuter: 'from-red-700 via-rose-500 to-amber-200', glow: 'rgba(239, 68, 68, 0.5)' },
+      { id: 8, name: 'الفحم والعود', hours: 9, body: '#475569', top: '#64748b', shade: '#0f172a', flameOuter: 'from-indigo-600 via-sky-400 to-white', glow: 'rgba(99, 102, 241, 0.5)' },
+      { id: 9, name: 'الذهب الخالص ✨', hours: 10, body: '#fde047', top: '#fef08a', shade: '#ca8a04', flameOuter: 'from-amber-500 via-yellow-300 to-white', glow: 'rgba(250, 204, 21, 0.6)' }
+    ];
+
+    // ==========================================
+    // 2. بيانات ألوان الجدران (تشمل مكتباً ومقهى دراسياً بسيطاً وهادئاً)
+    // ==========================================
+    const THEMES = [
+      { id: 'dark', name: 'الليل الهادئ', hours: 0, bg: '#0b0d12' },
+      { id: 'desk', name: 'جدار المكتب الهادئ', hours: 2, bg: 'linear-gradient(180deg, #1e293b 0%, #17202a 65%, #29221d 65%, #1c1714 100%)' },
+      { id: 'study_cafe', name: 'جدار المقهى الدراسي', hours: 3, bg: 'linear-gradient(180deg, #2a1f1b 0%, #1c1512 65%, #33261f 65%, #211813 100%)' },
+      { id: 'midnight', name: 'أزرق منتصف الليل', hours: 4, bg: 'radial-gradient(circle at top, #172554, #090d16)' },
+      { id: 'forest', name: 'غابة الصنوبر', hours: 5, bg: 'radial-gradient(circle at top, #064e3b, #071310)' },
+      { id: 'plum', name: 'سماء البنفسج', hours: 7, bg: 'radial-gradient(circle at top, #3b0764, #0f0718)' },
+      { id: 'espresso', name: 'دفء المقهى', hours: 8, bg: 'radial-gradient(circle at top, #451a03, #120905)' },
+      { id: 'crimson', name: 'المخمل الملكي', hours: 10, bg: 'radial-gradient(circle at top, #4c0519, #120509)' }
+    ];
+
+    // ==========================================
+    // 3. إدارة البيانات المحفوظة (LocalStorage)
+    // ==========================================
+    const STORAGE_KEY = 'okowasana_candle_study_v3';
+
+    let userData = {
+      totalStudiedSeconds: 0,
+      longestSessionSeconds: 0,
+      selectedCandleId: 0,
+      selectedThemeId: 'dark',
+      unlockedCandles: [0],
+      unlockedThemes: ['dark']
+    };
+
+    function loadUserData() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          userData = { ...userData, ...JSON.parse(saved) };
+        } catch (e) {
+          console.error('خطأ في قراءة البيانات المحفوظة', e);
+        }
+      }
+    }
+
+    function saveUserData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
+      updateStatsUI();
+    }
+
+    // ==========================================
+    // 4. متغيرات المؤقت والعناصر
+    // ==========================================
     let totalSeconds = 0;
     let initialTotalSeconds = 0;
+    let currentSessionSeconds = 0;
     let timerInterval = null;
     let isRunning = false;
+    let currentModalTab = 'candles';
+    let pendingChallenge = null;
 
     const hoursInput = document.getElementById('hoursInput');
     const minutesInput = document.getElementById('minutesInput');
     const secondsInput = document.getElementById('secondsInput');
     const timerDisplay = document.getElementById('timerDisplay');
     const flame = document.getElementById('flame');
+    const flameOuter = document.getElementById('flameOuter');
     const flameContainer = document.getElementById('flameContainer');
     const candleBody = document.getElementById('candleBody');
+    const candleMainPath = document.getElementById('candleMainPath');
+    const candleTopPath = document.getElementById('candleTopPath');
+    const candleShadePath = document.getElementById('candleShadePath');
     const ambientGlow = document.getElementById('ambientGlow');
     const waxDrip = document.getElementById('waxDrip');
     const smokeContainer = document.getElementById('smokeContainer');
@@ -210,12 +392,125 @@
       return num.toString().padStart(2, '0');
     }
 
-    function updateDisplay() {
-      const h = Math.floor(totalSeconds / 3600);
-      const m = Math.floor((totalSeconds % 3600) / 60);
-      const s = totalSeconds % 60;
+    function formatHMS(sec) {
+      const h = Math.floor(sec / 3600);
+      const m = Math.floor((sec % 3600) / 60);
+      const s = sec % 60;
+      return `${pad(h)}:${pad(m)}:${pad(s)}`;
+    }
 
-      timerDisplay.textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
+    function getStudiedHours() {
+      return userData.totalStudiedSeconds / 3600;
+    }
+
+    function isCandleUnlocked(candle) {
+      return userData.unlockedCandles.includes(candle.id) || getStudiedHours() >= candle.hours;
+    }
+
+    function isThemeUnlocked(theme) {
+      return userData.unlockedThemes.includes(theme.id) || getStudiedHours() >= theme.hours;
+    }
+
+    // تحديث الإحصائيات والعدادات في الواجهة
+    function updateStatsUI() {
+      document.getElementById('totalStudiedText').textContent = formatHMS(userData.totalStudiedSeconds);
+      document.getElementById('longestSessionText').textContent = formatHMS(userData.longestSessionSeconds);
+
+      const unlockedC = CANDLES.filter(c => isCandleUnlocked(c)).length;
+      const unlockedT = THEMES.filter(t => isThemeUnlocked(t)).length;
+
+      document.getElementById('unlockedCandlesCount').textContent = unlockedC;
+      document.getElementById('unlockedThemesCount').textContent = unlockedT;
+    }
+
+    // تطبيق شكل الشمعة مباشرة بدون كلمة معاينة
+    function applyCandle(candleId) {
+      const candle = CANDLES.find(c => c.id === candleId) || CANDLES[0];
+      candleMainPath.setAttribute('fill', candle.body);
+      candleTopPath.setAttribute('fill', candle.top);
+      candleShadePath.setAttribute('fill', candle.shade);
+      waxDrip.style.backgroundColor = candle.body;
+      flameOuter.className = `absolute inset-0 bg-gradient-to-t ${candle.flameOuter} rounded-t-full rounded-b-md blur-[1px]`;
+      ambientGlow.style.background = `radial-gradient(circle, ${candle.glow} 0%, transparent 75%)`;
+      document.getElementById('activeCandleBadge').textContent = `شمعة ${candle.name}`;
+    }
+
+    // تطبيق لون الجدار (الخلفية)
+    function applyTheme(themeId) {
+      const theme = THEMES.find(t => t.id === themeId) || THEMES[0];
+      document.getElementById('mainBody').style.background = theme.bg;
+    }
+
+    // اختيار تحدي غير مفتوح وتطبيق شكله مباشرة دون كلمة معاينة
+    function selectChallengeItem(type, item) {
+      pendingChallenge = { type, item };
+      closeModal();
+
+      if (type === 'candle') {
+        applyCandle(item.id);
+      } else {
+        applyTheme(item.id);
+      }
+
+      const bar = document.getElementById('previewChallengeBar');
+      document.getElementById('previewChallengeText').textContent =
+        type === 'candle'
+          ? `تحدي شمعة ${item.name} (${item.hours} ساعات)`
+          : `تحدي ${item.name} (${item.hours} ساعات)`;
+      
+      bar.classList.remove('hidden');
+      bar.classList.add('flex');
+    }
+
+    // بدء التحدي المختار مباشرة
+    function startSelectedChallenge() {
+      if (!pendingChallenge) return;
+      if (isRunning) {
+        pauseTimer();
+      }
+      resetTimer();
+
+      hoursInput.value = pendingChallenge.item.hours;
+      minutesInput.value = 0;
+      secondsInput.value = 0;
+      syncInputDisplay();
+
+      document.getElementById('previewChallengeBar').classList.add('hidden');
+      document.getElementById('previewChallengeBar').classList.remove('flex');
+      showToast(`🔥 تم ضبط المؤقت على ${pendingChallenge.item.hours} ساعات! ولّع الكبريت وابدأ!`);
+    }
+
+    // إلغاء التحدي والعودة للشمعة والجدار المفعلين
+    function cancelPreview() {
+      pendingChallenge = null;
+      document.getElementById('previewChallengeBar').classList.add('hidden');
+      document.getElementById('previewChallengeBar').classList.remove('flex');
+      applyCandle(userData.selectedCandleId);
+      applyTheme(userData.selectedThemeId);
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('unlockToast');
+      document.getElementById('unlockToastText').textContent = msg;
+      toast.classList.remove('hidden');
+      toast.classList.add('flex');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+        toast.classList.remove('flex');
+      }, 4500);
+    }
+
+    function syncInputDisplay() {
+      if (!isRunning && totalSeconds === 0) {
+        const h = parseInt(hoursInput.value) || 0;
+        const m = parseInt(minutesInput.value) || 0;
+        const s = parseInt(secondsInput.value) || 0;
+        timerDisplay.textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
+      }
+    }
+
+    function updateDisplay() {
+      timerDisplay.textContent = formatHMS(totalSeconds);
 
       if (initialTotalSeconds > 0) {
         const ratio = totalSeconds / initialTotalSeconds;
@@ -232,7 +527,9 @@
       }
     }
 
-    // زر التشغيل: ولّع الكبريت 🪵🔥
+    // ==========================================
+    // 5. التحكم بالمؤقت وحساب الإنجاز لحظة بلحظة
+    // ==========================================
     function startTimer() {
       if (!isRunning) {
         if (totalSeconds === 0) {
@@ -242,13 +539,12 @@
 
           totalSeconds = (h * 3600) + (m * 60) + s;
           initialTotalSeconds = totalSeconds;
+          currentSessionSeconds = 0;
         }
 
         if (totalSeconds <= 0) return;
 
         isRunning = true;
-        
-        // إظهار حركة الكبريت أولاً
         matchstick.classList.remove('hidden');
         smokeContainer.classList.add('hidden');
 
@@ -268,7 +564,48 @@
           updateDisplay();
 
           timerInterval = setInterval(() => {
+            const prevHours = getStudiedHours();
+
             totalSeconds--;
+            currentSessionSeconds++;
+            userData.totalStudiedSeconds++;
+
+            // تحديث الرقم القياسي
+            if (currentSessionSeconds > userData.longestSessionSeconds) {
+              userData.longestSessionSeconds = currentSessionSeconds;
+            }
+
+            // فتح العناصر عند الوصول للساعات المطلوبة أو إتمام التحدي المختار
+            const newHours = getStudiedHours();
+            const sessionHours = currentSessionSeconds / 3600;
+
+            CANDLES.forEach(c => {
+              if (!userData.unlockedCandles.includes(c.id)) {
+                const completedSpecificChallenge = pendingChallenge && pendingChallenge.type === 'candle' && pendingChallenge.item.id === c.id && sessionHours >= c.hours;
+                if ((c.hours > 0 && prevHours < c.hours && newHours >= c.hours) || completedSpecificChallenge) {
+                  userData.unlockedCandles.push(c.id);
+                  userData.selectedCandleId = c.id;
+                  applyCandle(c.id);
+                  pendingChallenge = null;
+                  showToast(`🎉 مبارك! ربحت شمعة "${c.name}"!`);
+                }
+              }
+            });
+
+            THEMES.forEach(t => {
+              if (!userData.unlockedThemes.includes(t.id)) {
+                const completedSpecificChallenge = pendingChallenge && pendingChallenge.type === 'theme' && pendingChallenge.item.id === t.id && sessionHours >= t.hours;
+                if ((t.hours > 0 && prevHours < t.hours && newHours >= t.hours) || completedSpecificChallenge) {
+                  userData.unlockedThemes.push(t.id);
+                  userData.selectedThemeId = t.id;
+                  applyTheme(t.id);
+                  pendingChallenge = null;
+                  showToast(`🎨 رائع! ربحت "${t.name}"!`);
+                }
+              }
+            });
+
+            saveUserData();
             updateDisplay();
 
             if (totalSeconds <= 0) {
@@ -279,13 +616,11 @@
       }
     }
 
-    // زر الإيقاف: انفخ على الشمعة 🌬️
     function pauseTimer() {
       if (isRunning) {
         clearInterval(timerInterval);
         isRunning = false;
 
-        // إخفاء اللهيب وإظهار النفخة والدخان
         flame.classList.add('hidden');
         flame.classList.remove('flex');
         ambientGlow.classList.add('opacity-0');
@@ -305,10 +640,10 @@
       }
     }
 
-    // انتهاء العداد تلقائياً
     function finishTimer() {
       clearInterval(timerInterval);
       isRunning = false;
+      currentSessionSeconds = 0;
 
       flame.classList.add('hidden');
       flame.classList.remove('flex');
@@ -321,16 +656,16 @@
       startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
       pauseBtn.disabled = true;
       pauseBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      showToast('🕯️ ذابت الشمعة بالكامل! أحسنت صنعاً!');
     }
 
-    // زر إعادة الضبط: شمعة جديدة 🕯️
     function resetTimer() {
       clearInterval(timerInterval);
       isRunning = false;
       totalSeconds = 0;
       initialTotalSeconds = 0;
+      currentSessionSeconds = 0;
 
-      // إرجاع الشمعة لطولها الأصلي الكامل
       candleBody.style.transform = 'scaleY(1)';
       flameContainer.style.bottom = '180px';
 
@@ -342,16 +677,138 @@
       blowContainer.classList.add('hidden');
       matchstick.classList.add('hidden');
 
-      const h = parseInt(hoursInput.value) || 0;
-      const m = parseInt(minutesInput.value) || 0;
-      const s = parseInt(secondsInput.value) || 0;
-      timerDisplay.textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
+      syncInputDisplay();
 
       startBtn.disabled = false;
       startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
       pauseBtn.disabled = true;
       pauseBtn.classList.add('opacity-50', 'cursor-not-allowed');
     }
+
+    // ==========================================
+    // 6. نافذة اختيار الشموع وألوان الجدران
+    // ==========================================
+    function openModal(tab) {
+      document.getElementById('galleryModal').classList.remove('hidden');
+      document.getElementById('galleryModal').classList.add('flex');
+      switchTab(tab);
+    }
+
+    function closeModal() {
+      document.getElementById('galleryModal').classList.add('hidden');
+      document.getElementById('galleryModal').classList.remove('flex');
+    }
+
+    function switchTab(tab) {
+      currentModalTab = tab;
+      const tabCandles = document.getElementById('tabCandles');
+      const tabThemes = document.getElementById('tabThemes');
+
+      if (tab === 'candles') {
+        tabCandles.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-600 text-white transition';
+        tabThemes.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition';
+      } else {
+        tabThemes.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-sky-600 text-white transition';
+        tabCandles.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition';
+      }
+      renderModalGrid();
+    }
+
+    function renderModalGrid() {
+      const grid = document.getElementById('modalGrid');
+      document.getElementById('modalHoursBadge').textContent = formatHMS(userData.totalStudiedSeconds);
+      grid.innerHTML = '';
+
+      if (currentModalTab === 'candles') {
+        CANDLES.forEach(candle => {
+          const unlocked = isCandleUnlocked(candle);
+          const isSelected = userData.selectedCandleId === candle.id && !pendingChallenge;
+
+          const card = document.createElement('div');
+          card.className = `p-3 rounded-xl border flex flex-col items-center text-center transition relative cursor-pointer ${
+            isSelected
+              ? 'bg-amber-500/15 border-amber-400'
+              : unlocked
+              ? 'bg-slate-800/80 border-slate-700 hover:border-amber-400/60'
+              : 'bg-slate-950/70 border-slate-800 hover:border-amber-500/50'
+          }`;
+
+          card.onclick = () => {
+            if (unlocked) {
+              pendingChallenge = null;
+              document.getElementById('previewChallengeBar').classList.add('hidden');
+              userData.selectedCandleId = candle.id;
+              saveUserData();
+              applyCandle(candle.id);
+              renderModalGrid();
+            } else {
+              selectChallengeItem('candle', candle);
+            }
+          };
+
+          card.innerHTML = `
+            <div class="relative mb-2 flex flex-col items-center">
+              <div class="w-2.5 h-4 rounded-t-full bg-gradient-to-t ${candle.flameOuter} mb-0.5 opacity-90"></div>
+              <div class="w-8 h-12 rounded-t-sm rounded-b-sm shadow-md relative" style="background-color: ${candle.body}; border-top: 3px solid ${candle.top}; box-shadow: 0 0 12px ${candle.glow};">
+                ${!unlocked ? '<div class="absolute inset-0 bg-black/45 flex items-center justify-center text-xs rounded-sm">🔒</div>' : ''}
+              </div>
+            </div>
+            <div class="text-xs font-bold text-slate-100 mb-1">${candle.name}</div>
+            <div class="text-[11px] ${unlocked ? 'text-emerald-400' : 'text-amber-400'} font-semibold">
+              ${isSelected ? '✓ مُفعّلة' : unlocked ? 'متاحة' : `جيب ${candle.hours} ساعات وتعال`}
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+      } else {
+        THEMES.forEach(theme => {
+          const unlocked = isThemeUnlocked(theme);
+          const isSelected = userData.selectedThemeId === theme.id && !pendingChallenge;
+
+          const card = document.createElement('div');
+          card.className = `p-3 rounded-xl border flex flex-col items-center text-center transition relative cursor-pointer ${
+            isSelected
+              ? 'bg-sky-500/15 border-sky-400'
+              : unlocked
+              ? 'bg-slate-800/80 border-slate-700 hover:border-sky-400/60'
+              : 'bg-slate-950/70 border-slate-800 hover:border-sky-500/50'
+          }`;
+
+          card.onclick = () => {
+            if (unlocked) {
+              pendingChallenge = null;
+              document.getElementById('previewChallengeBar').classList.add('hidden');
+              userData.selectedThemeId = theme.id;
+              saveUserData();
+              applyTheme(theme.id);
+              renderModalGrid();
+            } else {
+              selectChallengeItem('theme', theme);
+            }
+          };
+
+          card.innerHTML = `
+            <div class="w-full h-14 rounded-lg mb-2 border border-slate-600 shadow-inner flex items-center justify-center relative overflow-hidden" style="background: ${theme.bg};">
+              ${!unlocked ? '<div class="absolute inset-0 bg-black/40 flex items-center justify-center text-sm">🔒</div>' : ''}
+            </div>
+            <div class="text-xs font-bold text-slate-100 mb-1">${theme.name}</div>
+            <div class="text-[11px] ${unlocked ? 'text-emerald-400' : 'text-sky-400'} font-semibold">
+              ${isSelected ? '✓ مُفعّل' : unlocked ? 'متاح' : `جيب ${theme.hours} ساعات وتعال`}
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+      }
+    }
+
+    // ==========================================
+    // 7. التهيئة عند فتح الصفحة
+    // ==========================================
+    loadUserData();
+    updateStatsUI();
+    applyCandle(userData.selectedCandleId);
+    applyTheme(userData.selectedThemeId);
+    syncInputDisplay();
   </script>
 </body>
-</html>p
+</html>
